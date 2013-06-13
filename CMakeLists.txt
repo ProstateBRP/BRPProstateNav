@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.9)
 project(BRPProstateNav)
 
 #-----------------------------------------------------------------------------
+set(EXTENSION_Name     "BRPProstateNav")
 set(EXTENSION_HOMEPAGE "http://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/BRPProstateNav")
 set(EXTENSION_CATEGORY "IGT")
 set(EXTENSION_CONTRIBUTORS "Junichi Tokuda (BWH)")
