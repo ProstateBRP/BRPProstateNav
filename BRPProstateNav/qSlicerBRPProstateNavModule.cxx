@@ -90,7 +90,7 @@ QIcon qSlicerBRPProstateNavModule::icon()const
 //-----------------------------------------------------------------------------
 QStringList qSlicerBRPProstateNavModule::categories() const
 {
-  return QStringList() << "Examples";
+  return QStringList() << "IGT";
 }
 
 //-----------------------------------------------------------------------------
