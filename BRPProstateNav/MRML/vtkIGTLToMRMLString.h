@@ -24,7 +24,7 @@ class VTK_SLICER_BRPPROSTATENAV_MODULE_MRML_EXPORT vtkIGTLToMRMLString : public 
 
   virtual int          GetConverterType() { return TYPE_NORMAL; };
   virtual const char*  GetIGTLName() { return "STRING"; };
-  virtual const char*  GetMRMLName() { return "String"; };
+  virtual const char*  GetMRMLName() { return "AnnotationText"; };
   virtual vtkIntArray* GetNodeEvents();
   virtual vtkMRMLNode* CreateNewNode(vtkMRMLScene* scene, const char* name);
 

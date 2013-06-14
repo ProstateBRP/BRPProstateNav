@@ -21,6 +21,10 @@ Program:   3D Slicer
 #include <vtkIntArray.h>
 #include <vtkMatrixToLinearTransform.h>
 #include <vtkMatrix4x4.h>
+#include <vtkObjectFactory.h>
+
+//------------------------------------------------------------------------------
+vtkMRMLNodeNewMacro(vtkMRMLIGTLSessionManagerNode);
 
 //----------------------------------------------------------------------------
 vtkMRMLIGTLSessionManagerNode::vtkMRMLIGTLSessionManagerNode()
@@ -173,7 +177,9 @@ void vtkMRMLIGTLSessionManagerNode::SetAndObserveConnectorNodeID(const char *con
 
   vtkSmartPointer< vtkMRMLAnnotationTextNode > command = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
   command->SetName("COMMAND");
-
+  scene->AddNode(command);
+  cnode->RegisterOutgoingMRMLNode(command);
+  this->AddAndObserveMessageNodeID(cnode->GetID());
 }
 
 

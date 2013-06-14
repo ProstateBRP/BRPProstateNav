@@ -25,10 +25,13 @@ class vtkIGTLToMRMLString;
 class VTK_SLICER_BRPPROSTATENAV_MODULE_MRML_EXPORT vtkMRMLIGTLSessionManagerNode : public vtkMRMLNode
 {
 public:
+  static vtkMRMLIGTLSessionManagerNode *New();
+
   vtkTypeMacro(vtkMRMLIGTLSessionManagerNode,vtkMRMLNode);
+
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  virtual vtkMRMLNode* CreateNodeInstance() = 0;
+  virtual vtkMRMLNode* CreateNodeInstance();
 
   /// 
   /// Read node attributes from XML file
@@ -40,7 +43,7 @@ public:
 
   /// 
   /// Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() = 0;
+  virtual const char* GetNodeTagName() {return "IGTLSessionManager";};
 
   ///
   /// Set and configure MRMLIGTLconnector node
