@@ -25,15 +25,19 @@ Currently, you can push a command message from the Python Interactor. After open
     >>> scene = slicer.mrmlScene
     >>> cnode = scene.GetNodeByID('vtkMRMLIGTLConnectorNode1')
     >>> sm = vtkMRMLIGTLSessionManagerNode()
-    >>> scene.AddNode(sm.GetID())
     >>> scene.AddNode(sm)
     >>> sm.SetAndObserveConnectorNodeID(cnode.GetID())
     >>> snode = scene.GetNodeByID('vtkMRMLAnnotationTextNode1')
-    >>> snode = scene.GetNodeByID('vtkMRMLAnnotationTextNode1')
-    >>> snode
-    >>> snode.SetTextLabel('Test')
-    >>> snode.SetTextLabel('COMMAND')
 
+If you wat to send 'Test' command, call the following line:
+
+    >>> snode.SetTextLabel('Test')
+
+
+
+### Plans
+
+Currently, the node is developed as part of BRPProstateNav () and LightWeightRobotIGT (https://github.com/SNRLab/LightWeightRobotIGT ) projects separately. The SessionManagerNode will become a parent class for all application-specific session management classes and integrated into OpenIGTLinkIF module. 
 
 
 
