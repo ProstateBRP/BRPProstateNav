@@ -9,19 +9,20 @@ Program:   3D Slicer
 
 =========================================================================auto=*/
 
-// MRML includes
-#include "vtkMRMLScene.h"
-#include "vtkMRMLIGTLSessionManagerNode.h"
-#include "vtkMRMLIGTLConnectorNode.h"
-#include "vtkMRMLAnnotationTextNode.h"
-#include "vtkIGTLToMRMLString.h"
-
 // VTK includes
 #include <vtkCommand.h>
 #include <vtkIntArray.h>
 #include <vtkMatrixToLinearTransform.h>
 #include <vtkMatrix4x4.h>
 #include <vtkObjectFactory.h>
+
+// MRML includes
+#include "vtkMRMLScene.h"
+#include "vtkMRMLIGTLSessionManagerNode.h"
+#include "vtkMRMLIGTLConnectorNode.h"
+#include "vtkMRMLAnnotationTextNode.h"
+#include "vtkMRMLLinearTransformNode.h"
+#include "vtkIGTLToMRMLString.h"
 
 //------------------------------------------------------------------------------
 vtkMRMLNodeNewMacro(vtkMRMLIGTLSessionManagerNode);
@@ -48,6 +49,9 @@ vtkMRMLIGTLSessionManagerNode::vtkMRMLIGTLSessionManagerNode()
                              this->GetMessageNodeReferenceMRMLAttributeName());
 
   this->StringMessageConverter = NULL;
+
+
+  this->CommunicationStatus = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -125,7 +129,6 @@ void vtkMRMLIGTLSessionManagerNode::SetAndObserveConnectorNodeID(const char *con
   events->InsertNextValue(vtkCommand::ModifiedEvent);
   this->SetAndObserveNodeReferenceID(this->GetConnectorNodeReferenceRole(), connectorNodeID, events);
   //this->InvokeEvent(vtkMRMLIGTLSessionManagerNode::TransformModifiedEvent, NULL);
-
   this->SetConnectorNodeIDInternal(connectorNodeID);
 
   // ------------------------------------------------------------
@@ -171,15 +174,10 @@ void vtkMRMLIGTLSessionManagerNode::SetAndObserveConnectorNodeID(const char *con
     }
   cnode->RegisterMessageConverter(this->StringMessageConverter);
 
-
   // ------------------------------------------------------------
-  // Register message converter
+  // Register message nodes
 
-  vtkSmartPointer< vtkMRMLAnnotationTextNode > command = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
-  command->SetName("COMMAND");
-  scene->AddNode(command);
-  cnode->RegisterOutgoingMRMLNode(command);
-  this->AddAndObserveMessageNodeID(cnode->GetID());
+  this->RegisterMessageNodes(cnode);
 }
 
 
@@ -212,8 +210,7 @@ void vtkMRMLIGTLSessionManagerNode::ProcessMRMLEvents ( vtkObject *caller,
   // as retrieving the parent transform node can be costly (browse the scene)
   // do some checks here to prevent retrieving the node for nothing.
   if (caller == NULL ||
-      (event != vtkCommand::ModifiedEvent && 
-      event != vtkMRMLIGTLSessionManagerNode::TransformModifiedEvent))
+      (event != vtkCommand::ModifiedEvent))
     {
     return;
     }
@@ -297,4 +294,261 @@ void vtkMRMLIGTLSessionManagerNode::OnNodeReferenceModified(vtkMRMLNodeReference
   else if (strcmp(reference->GetReferenceRole(), this->GetConnectorNodeReferenceRole()) == 0)
     {
     }
+}
+
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ConfigureMessageNode(vtkMRMLIGTLConnectorNode* cnode, vtkMRMLNode* node, int io)
+{
+  if (!cnode || !node)
+    {
+    return 0;
+    }
+
+  vtkMRMLScene* scene = this->GetScene();
+  if (!scene) 
+    {
+    return 0;
+    }
+
+  node->SetAttribute("IGTLSessionManager.Created", "1");
+  scene->AddNode(node);
+
+  if (io == vtkMRMLIGTLConnectorNode::IO_OUTGOING)
+    {
+    cnode->RegisterOutgoingMRMLNode(node);
+    }
+  else // vtkMRMLIGTLConnectorNode::IO_INCOMING
+    {
+    cnode->RegisterIncomingMRMLNode(node);
+    }
+
+  this->AddAndObserveMessageNodeID(node->GetID());
+
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::RegisterMessageNodes(vtkMRMLIGTLConnectorNode* cnode)
+{
+  if (!cnode)
+    {
+    return 0;
+    }
+
+  // --------------------------------------------------
+  // Outgoing nodes
+
+  vtkSmartPointer< vtkMRMLAnnotationTextNode > outCommand = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
+  outCommand->SetName("COMMAND");
+  this->ConfigureMessageNode(cnode, outCommand, vtkMRMLIGTLConnectorNode::IO_OUTGOING);
+  this->SetOutCommandNodeIDInternal(outCommand->GetID());
+
+  vtkSmartPointer< vtkMRMLLinearTransformNode > calibTrans = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
+  calibTrans->SetName("CALIBRATION");
+  this->ConfigureMessageNode(cnode, calibTrans, vtkMRMLIGTLConnectorNode::IO_OUTGOING);
+  this->SetOutCalibrationTransformNodeIDInternal(calibTrans->GetID());
+
+  vtkSmartPointer< vtkMRMLLinearTransformNode > targetTrans = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
+  calibTrans->SetName("TARGET");
+  this->ConfigureMessageNode(cnode, targetTrans, vtkMRMLIGTLConnectorNode::IO_OUTGOING);
+  this->SetOutTargetTransformQueryNodeIDInternal(targetTrans->GetID());
+
+  // --------------------------------------------------
+  // Incoming nodes
+  vtkSmartPointer< vtkMRMLAnnotationTextNode > ack = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
+  ack->SetName("ACK");
+  this->ConfigureMessageNode(cnode, ack, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInAckknowledgeStringNodeIDInternal(ack->GetID());
+
+  vtkSmartPointer< vtkMRMLAnnotationTextNode > inCommand = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
+  inCommand->SetName("COMMAND");
+  this->ConfigureMessageNode(cnode, inCommand, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInCommandStringNodeIDInternal(inCommand->GetID());  
+
+  /// TODO: Need vtkMRMLIGTLStatusNode.
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > startUpStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //startUpStatus->SetName("START_UP");
+  //this->ConfigureMessageNode(cnode, startUpStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInStartUpStatusNodeIDInternal(startUpStatus->GetID());
+  //
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > calibrationStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //calibrationStatus->SetName("CALIBRATION");
+  //this->ConfigureMessageNode(cnode, calibrationStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInCalibrationStatusNodeIDInternal(calibrationStatus->GetID());
+  //
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > targetingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //targetingStatus->SetName("TARGETING");
+  //this->ConfigureMessageNode(cnode, targetingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInTargetingStatusNodeIDInternal(targetingStatus->GetID());
+  //
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > movingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //movingStatus->SetName("MOVING_DONE");
+  //this->ConfigureMessageNode(cnode, movingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInMovingStatusNodeIDInternal(movingStatus->GetID());
+  //
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > manualStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //manualStatus->SetName("MANUAL");
+  //this->ConfigureMessageNode(cnode, manualStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInManualStatusNodeIDInternal(manualStatus->GetID());
+  //
+  //vtkSmartPointer< vtkMRMLIGTLStatusNode > errorStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  //errorStatus->SetName("ERROR");
+  //this->ConfigureMessageNode(cnode, errorStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  //this->SetInErrorStatusNodeIDInternal(errorStatus->GetID());
+
+  vtkSmartPointer< vtkMRMLLinearTransformNode > currentPosition = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
+  currentPosition->SetName("CURRENT_POSITION");
+  this->ConfigureMessageNode(cnode, currentPosition, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInCurrentPositionTransformNodeIDInternal(currentPosition->GetID());
+
+  return 1;
+}
+
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::IsConnected()
+{
+  vtkMRMLScene* scene = this->GetScene();
+  if (!scene) 
+    {
+    return 0;
+    }
+
+  vtkMRMLNode* node = scene->GetNodeByID(this->GetConnectorNodeIDInternal());
+  vtkMRMLIGTLConnectorNode* cnode = vtkMRMLIGTLConnectorNode::SafeDownCast(node);
+  if (!cnode)
+    {
+    return 0;
+    }
+
+  if (cnode->GetState() == vtkMRMLIGTLConnectorNode::STATE_CONNECTED)
+    {
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendStartUpCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendPlanningCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendCalibrationCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendCalibrationTransform(vtkMatrix4x4* transform)
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendTargetingCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendTargetingTarget(double r, double a, double s)
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendTargetingMove()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendManualCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendStopCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendEmergencyCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SendGetStatusCommand()
+{
+  if (!this->IsConnected())
+    {
+    return 0;
+    }
+  
+  return 1;
 }
