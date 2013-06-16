@@ -18,6 +18,7 @@ set(module_mrml_include_directories
 # Source files
 set(module_mrml_SRCS
   vtkMRMLIGTLSessionManagerNode.cxx
+  vtkMRMLIGTLStatusNode.cxx
   vtkIGTLToMRMLString.cxx
   )
 

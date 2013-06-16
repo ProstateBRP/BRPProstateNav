@@ -18,6 +18,7 @@
 // BRPProstateNav Logic includes
 #include "vtkSlicerBRPProstateNavLogic.h"
 #include "vtkMRMLIGTLSessionManagerNode.h"
+#include "vtkMRMLIGTLStatusNode.h"
 
 // MRML includes
 
@@ -63,7 +64,8 @@ void vtkSlicerBRPProstateNavLogic::RegisterNodes()
 
   vtkMRMLScene * scene = this->GetMRMLScene();
   scene->RegisterNodeClass(vtkNew< vtkMRMLIGTLSessionManagerNode >().GetPointer());
-  std::cerr << "Registering Nodes" << std::endl;
+  scene->RegisterNodeClass(vtkNew< vtkMRMLIGTLStatusNode >().GetPointer());
+
 }
 
 //---------------------------------------------------------------------------
