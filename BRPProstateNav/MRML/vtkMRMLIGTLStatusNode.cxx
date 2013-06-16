@@ -81,6 +81,7 @@ vtkTypeUInt16 vtkMRMLIGTLStatusNode::GetCode()
 int vtkMRMLIGTLStatusNode::SetSubCode(vtkTypeInt64 code)
 {
   this->SubCode = code;
+  this->InvokeEvent(StatusModifiedEvent, NULL);
   return 1;
 }
 
@@ -96,6 +97,7 @@ int vtkMRMLIGTLStatusNode::SetErrorName(const char* name)
   if (strlen(name) <= 20)
     {
     this->ErrorName = name;
+    this->InvokeEvent(StatusModifiedEvent, NULL);
     return 1;
     }
   else 
@@ -111,14 +113,37 @@ const char* vtkMRMLIGTLStatusNode::GetErrorName()
 }
 
 //----------------------------------------------------------------------------
-int vtkMRMLIGTLStatusNode::SetMessageString(const char* name)
+int vtkMRMLIGTLStatusNode::SetStatusString(const char* name)
 {
-  this->MessageString = name;
+
+  this->StatusString = name;
+  this->InvokeEvent(StatusModifiedEvent, NULL);
   return 1;
 }
 
 //----------------------------------------------------------------------------
-const char* vtkMRMLIGTLStatusNode::GetMessageString()
+const char* vtkMRMLIGTLStatusNode::GetStatusString()
 {
-  return this->MessageString.c_str();
+  return this->StatusString.c_str();
+}
+
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLStatusNode::SetStatus(vtkTypeUInt16 code, vtkTypeUInt16 subcode, const char* errorName, const char* statusString)
+{
+  if (code < STATUS_NUM_TYPES && 
+      strlen(errorName) <= 20)
+    {
+    this->Code = code;
+    this->SubCode = subcode;
+    this->ErrorName = errorName;
+    this->StatusString = statusString;
+    this->InvokeEvent(StatusModifiedEvent, NULL);
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+
 }

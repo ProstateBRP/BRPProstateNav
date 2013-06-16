@@ -20,6 +20,7 @@ set(module_mrml_SRCS
   vtkMRMLIGTLSessionManagerNode.cxx
   vtkMRMLIGTLStatusNode.cxx
   vtkIGTLToMRMLString.cxx
+  vtkIGTLToMRMLStatus.cxx
   )
 
 # Additional Target libraries

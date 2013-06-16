@@ -18,6 +18,7 @@
 
 class vtkMatrix4x4;
 class vtkIGTLToMRMLString;
+class vtkIGTLToMRMLStatus;
 class vtkMRMLIGTLConnectorNode;
 
 /// \brief MRML node to manage OpenIGTLink 
@@ -238,6 +239,7 @@ private:
   vtkGetStringMacro(InCurrentPositionTransformNodeIDInternal);
 
   vtkIGTLToMRMLString * StringMessageConverter;
+  vtkIGTLToMRMLStatus * StatusMessageConverter;
 
   int CommunicationStatus; // COMSTATE_*
   

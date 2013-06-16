@@ -60,11 +60,15 @@ public:
   /// Get an error name.
   const char*  GetErrorName();
 
-  /// Set a message string. Return 0 if the string is not accepted.
-  int SetMessageString(const char* name);
+  /// Set a status string. Return 0 if the string is not accepted.
+  int SetStatusString(const char* name);
 
   /// Get a message string. 
-  const char*  GetMessageString();
+  const char*  GetStatusString();
+
+  /// Set all status information
+  int SetStatus(vtkTypeUInt16 code, vtkTypeUInt16 subcode, const char* errorName, const char* statusString);
+
 
   /// Status codes -- see igtl_status.h
   enum {
@@ -96,7 +100,7 @@ public:
   ///
   enum
   {
-    StatusChangeEvent  = 20000,
+    StatusModifiedEvent  = 30000,
   };
 
 protected:
@@ -112,7 +116,7 @@ private:
 
   //BTX
   std::string ErrorName;
-  std::string MessageString;
+  std::string StatusString;
   //ETX
 
 };

@@ -22,7 +22,9 @@ Program:   3D Slicer
 #include "vtkMRMLIGTLConnectorNode.h"
 #include "vtkMRMLAnnotationTextNode.h"
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLIGTLStatusNode.h"
 #include "vtkIGTLToMRMLString.h"
+#include "vtkIGTLToMRMLStatus.h"
 
 //------------------------------------------------------------------------------
 vtkMRMLNodeNewMacro(vtkMRMLIGTLSessionManagerNode);
@@ -49,6 +51,7 @@ vtkMRMLIGTLSessionManagerNode::vtkMRMLIGTLSessionManagerNode()
                              this->GetMessageNodeReferenceMRMLAttributeName());
 
   this->StringMessageConverter = NULL;
+  this->StatusMessageConverter = NULL;
 
 
   this->CommunicationStatus = 0;
@@ -173,6 +176,13 @@ void vtkMRMLIGTLSessionManagerNode::SetAndObserveConnectorNodeID(const char *con
     this->StringMessageConverter = vtkIGTLToMRMLString::New();
     }
   cnode->RegisterMessageConverter(this->StringMessageConverter);
+
+  if (!this->StatusMessageConverter)
+    {
+    this->StatusMessageConverter = vtkIGTLToMRMLStatus::New();
+    }
+  cnode->RegisterMessageConverter(this->StatusMessageConverter);
+
 
   // ------------------------------------------------------------
   // Register message nodes
@@ -366,36 +376,35 @@ int vtkMRMLIGTLSessionManagerNode::RegisterMessageNodes(vtkMRMLIGTLConnectorNode
   this->ConfigureMessageNode(cnode, inCommand, vtkMRMLIGTLConnectorNode::IO_INCOMING);
   this->SetInCommandStringNodeIDInternal(inCommand->GetID());  
 
-  /// TODO: Need vtkMRMLIGTLStatusNode.
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > startUpStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //startUpStatus->SetName("START_UP");
-  //this->ConfigureMessageNode(cnode, startUpStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInStartUpStatusNodeIDInternal(startUpStatus->GetID());
-  //
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > calibrationStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //calibrationStatus->SetName("CALIBRATION");
-  //this->ConfigureMessageNode(cnode, calibrationStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInCalibrationStatusNodeIDInternal(calibrationStatus->GetID());
-  //
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > targetingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //targetingStatus->SetName("TARGETING");
-  //this->ConfigureMessageNode(cnode, targetingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInTargetingStatusNodeIDInternal(targetingStatus->GetID());
-  //
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > movingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //movingStatus->SetName("MOVING_DONE");
-  //this->ConfigureMessageNode(cnode, movingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInMovingStatusNodeIDInternal(movingStatus->GetID());
-  //
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > manualStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //manualStatus->SetName("MANUAL");
-  //this->ConfigureMessageNode(cnode, manualStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInManualStatusNodeIDInternal(manualStatus->GetID());
-  //
-  //vtkSmartPointer< vtkMRMLIGTLStatusNode > errorStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  //errorStatus->SetName("ERROR");
-  //this->ConfigureMessageNode(cnode, errorStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  //this->SetInErrorStatusNodeIDInternal(errorStatus->GetID());
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > startUpStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  startUpStatus->SetName("START_UP");
+  this->ConfigureMessageNode(cnode, startUpStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInStartUpStatusNodeIDInternal(startUpStatus->GetID());
+  
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > calibrationStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  calibrationStatus->SetName("CALIBRATION");
+  this->ConfigureMessageNode(cnode, calibrationStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInCalibrationStatusNodeIDInternal(calibrationStatus->GetID());
+  
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > targetingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  targetingStatus->SetName("TARGETING");
+  this->ConfigureMessageNode(cnode, targetingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInTargetingStatusNodeIDInternal(targetingStatus->GetID());
+  
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > movingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  movingStatus->SetName("MOVING_DONE");
+  this->ConfigureMessageNode(cnode, movingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInMovingStatusNodeIDInternal(movingStatus->GetID());
+  
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > manualStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  manualStatus->SetName("MANUAL");
+  this->ConfigureMessageNode(cnode, manualStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInManualStatusNodeIDInternal(manualStatus->GetID());
+  
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > errorStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  errorStatus->SetName("ERROR");
+  this->ConfigureMessageNode(cnode, errorStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInErrorStatusNodeIDInternal(errorStatus->GetID());
 
   vtkSmartPointer< vtkMRMLLinearTransformNode > currentPosition = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
   currentPosition->SetName("CURRENT_POSITION");
