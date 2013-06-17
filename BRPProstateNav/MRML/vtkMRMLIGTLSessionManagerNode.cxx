@@ -232,6 +232,64 @@ void vtkMRMLIGTLSessionManagerNode::ProcessMRMLEvents ( vtkObject *caller,
   //  //this->GetScene()->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
   //  this->InvokeEvent(vtkMRMLIGTLSessionManagerNode::TransformModifiedEvent, NULL);
   //  }
+  
+  vtkMRMLNode * node = vtkMRMLNode::SafeDownCast(caller);
+  if (strcmp(node->GetID(), this->GetConnectorNodeIDInternal()) == 0)
+    {
+    return;
+    }
+
+  // Process incoming data
+  if (strcmp(node->GetID(), this->GetInAckknowledgeStringNodeIDInternal()) == 0)
+    {
+    vtkMRMLAnnotationTextNode * tnode = vtkMRMLAnnotationTextNode::SafeDownCast(node);
+    this->ProcAckknowledgeString(tnode);
+    }
+  else if (strcmp(node->GetID(), this->GetInStartUpStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcStartUpStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInCalibrationStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcCalibrationStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInTargetingStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcTargetingStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInTargetStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcTargetStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInMovingStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcMovingStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInManualStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcMovingStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInErrorStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcErrorStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInCommandStatusNodeIDInternal()) == 0)
+    {
+    vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
+    this->ProcCommandStatus(snode);
+    }
+  else if (strcmp(node->GetID(), this->GetInCurrentPositionTransformNodeIDInternal()) == 0)
+    {
+    vtkMRMLLinearTransformNode * tnode = vtkMRMLLinearTransformNode::SafeDownCast(node);
+    this->ProcCurrentPositionTransform(tnode);
+    }
 }
 
 
@@ -371,11 +429,6 @@ int vtkMRMLIGTLSessionManagerNode::RegisterMessageNodes(vtkMRMLIGTLConnectorNode
   this->ConfigureMessageNode(cnode, ack, vtkMRMLIGTLConnectorNode::IO_INCOMING);
   this->SetInAckknowledgeStringNodeIDInternal(ack->GetID());
 
-  vtkSmartPointer< vtkMRMLAnnotationTextNode > inCommand = vtkSmartPointer< vtkMRMLAnnotationTextNode >::New();
-  inCommand->SetName("COMMAND");
-  this->ConfigureMessageNode(cnode, inCommand, vtkMRMLIGTLConnectorNode::IO_INCOMING);
-  this->SetInCommandStringNodeIDInternal(inCommand->GetID());  
-
   vtkSmartPointer< vtkMRMLIGTLStatusNode > startUpStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
   startUpStatus->SetName("START_UP");
   this->ConfigureMessageNode(cnode, startUpStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
@@ -392,7 +445,7 @@ int vtkMRMLIGTLSessionManagerNode::RegisterMessageNodes(vtkMRMLIGTLConnectorNode
   this->SetInTargetingStatusNodeIDInternal(targetingStatus->GetID());
   
   vtkSmartPointer< vtkMRMLIGTLStatusNode > movingStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
-  movingStatus->SetName("MOVING_DONE");
+  movingStatus->SetName("DONE_MOVING");
   this->ConfigureMessageNode(cnode, movingStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
   this->SetInMovingStatusNodeIDInternal(movingStatus->GetID());
   
@@ -405,6 +458,11 @@ int vtkMRMLIGTLSessionManagerNode::RegisterMessageNodes(vtkMRMLIGTLConnectorNode
   errorStatus->SetName("ERROR");
   this->ConfigureMessageNode(cnode, errorStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
   this->SetInErrorStatusNodeIDInternal(errorStatus->GetID());
+
+  vtkSmartPointer< vtkMRMLIGTLStatusNode > commandStatus = vtkSmartPointer< vtkMRMLIGTLStatusNode >::New();
+  commandStatus->SetName("COMMAND");
+  this->ConfigureMessageNode(cnode, commandStatus, vtkMRMLIGTLConnectorNode::IO_INCOMING);
+  this->SetInCommandStatusNodeIDInternal(commandStatus->GetID());
 
   vtkSmartPointer< vtkMRMLLinearTransformNode > currentPosition = vtkSmartPointer< vtkMRMLLinearTransformNode >::New();
   currentPosition->SetName("CURRENT_POSITION");
@@ -442,6 +500,15 @@ int vtkMRMLIGTLSessionManagerNode::IsConnected()
 }
 
 //----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::SetCommunicationStatus(int newState)
+{
+  this->CommunicationStatus = newState;
+  this->InvokeEvent(StatusChangeEvent);
+  return 1;
+}
+
+
+//----------------------------------------------------------------------------
 int vtkMRMLIGTLSessionManagerNode::SendStartUpCommand()
 {
   if (!this->IsConnected())
@@ -449,6 +516,8 @@ int vtkMRMLIGTLSessionManagerNode::SendStartUpCommand()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -460,6 +529,8 @@ int vtkMRMLIGTLSessionManagerNode::SendPlanningCommand()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -470,6 +541,8 @@ int vtkMRMLIGTLSessionManagerNode::SendCalibrationCommand()
     {
     return 0;
     }
+
+  // TODO: Start time and send command
   
   return 1;
 }
@@ -482,6 +555,8 @@ int vtkMRMLIGTLSessionManagerNode::SendCalibrationTransform(vtkMatrix4x4* transf
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -493,6 +568,8 @@ int vtkMRMLIGTLSessionManagerNode::SendTargetingCommand()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -504,6 +581,8 @@ int vtkMRMLIGTLSessionManagerNode::SendTargetingTarget(double r, double a, doubl
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -515,6 +594,8 @@ int vtkMRMLIGTLSessionManagerNode::SendTargetingMove()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -526,6 +607,8 @@ int vtkMRMLIGTLSessionManagerNode::SendManualCommand()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -537,6 +620,8 @@ int vtkMRMLIGTLSessionManagerNode::SendStopCommand()
     return 0;
     }
   
+  // TODO: Start time and send command
+
   return 1;
 }
 
@@ -547,7 +632,9 @@ int vtkMRMLIGTLSessionManagerNode::SendEmergencyCommand()
     {
     return 0;
     }
-  
+
+  // TODO: Start time and send command  
+
   return 1;
 }
 
@@ -558,6 +645,218 @@ int vtkMRMLIGTLSessionManagerNode::SendGetStatusCommand()
     {
     return 0;
     }
-  
+
+  // TODO: Start time and send command  
+
   return 1;
 }
+
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcAckknowledgeString(vtkMRMLAnnotationTextNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (strcmp(node->GetTextLabel(), "START_UP") == 0)
+    {
+    if (this->CommunicationStatus == COMSTATE_STARTUP_CMD_SENT)
+      {
+      this->SetCommunicationStatus(COMSTATE_STARTUP_CMD_ACK);
+      // Stop timer
+      }
+    }
+  else if (strcmp(node->GetTextLabel(), "PLANNING") == 0)
+    {
+    if (this->CommunicationStatus == COMSTATE_PLANNING_CMD_SENT)
+      {
+      this->SetCommunicationStatus(COMSTATE_PLANNING_CMD_ACK);
+      // Stop timer
+      }
+    }
+  else if (strcmp(node->GetTextLabel(), "CALIBRATION") == 0)
+    {
+    if (this->CommunicationStatus == COMSTATE_CALIBRATION_CMD_SENT)
+      {
+      this->SetCommunicationStatus(COMSTATE_CALIBRATION_CMD_ACK);
+      // Stop timer
+      }
+    }
+  else if (strcmp(node->GetTextLabel(), "TARGETING") == 0)
+    {
+    if (this->CommunicationStatus == COMSTATE_TARGETING_CMD_SENT)
+      {
+      this->SetCommunicationStatus(COMSTATE_TARGETING_CMD_ACK);
+      // Stop timer
+      }
+    }
+  else if (strcmp(node->GetTextLabel(), "MANUAL") == 0)
+    {
+    if (this->CommunicationStatus == COMSTATE_MANUAL_CMD_SENT)
+      {
+      this->SetCommunicationStatus(COMSTATE_MANUAL_CMD_ACK);
+      // Stop timer
+      }
+    }
+
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcStartUpStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_STARTUP_CMD_ACK)
+    {
+    this->SetCommunicationStatus(COMSTATE_STARTUP_CMD_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcCalibrationStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_CALIBRATION_TRANS_ACK)
+    {
+    this->SetCommunicationStatus(COMSTATE_CALIBRATION_TRANS_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcTargetingStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_TARGETING_TARGET_ACK)
+    {
+    this->CommunicationStatus = COMSTATE_TARGETING_TARGET_DONE;
+    // Check error
+    if (node->GetCode() == vtkMRMLIGTLStatusNode::STATUS_OK)
+      {
+      // The robot has entered targeting mode
+      }
+    else if (node->GetCode() == vtkMRMLIGTLStatusNode::STATUS_NOT_READY)
+      {
+      // ERROR: device is not ready for targeting (e.g. no calibration )
+      }
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcTargetStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_TARGETING_TARGET_ACK)
+    {
+    // Check error
+    if (node->GetCode() == vtkMRMLIGTLStatusNode::STATUS_OK)
+      {
+      // Target is accepted
+      }
+    else if (node->GetCode() == vtkMRMLIGTLStatusNode::STATUS_NOT_READY)
+      {
+      // ERROR: Not in targeting mode
+      }
+    else if (node->GetCode() == vtkMRMLIGTLStatusNode::STATUS_CONFIG_ERROR)
+      {
+      // ERROR: Not valid target
+      }
+    this->SetCommunicationStatus(COMSTATE_TARGETING_CMD_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcMovingStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_TARGETING_MOVE_ACK)
+    {
+    this->SetCommunicationStatus(COMSTATE_TARGETING_MOVE_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcManualStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_MANUAL_CMD_ACK)
+    {
+    this->SetCommunicationStatus(COMSTATE_MANUAL_CMD_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcErrorStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  /// ERROR
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcCommandStatus(vtkMRMLIGTLStatusNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  if (this->CommunicationStatus == COMSTATE_STOP_CMD_SENT)
+    {
+    this->SetCommunicationStatus(COMSTATE_STOP_CMD_DONE);
+    }
+  else if (this->CommunicationStatus == COMSTATE_EMERGENCY_CMD_SENT)
+    {
+    this->SetCommunicationStatus(COMSTATE_EMERGENCY_CMD_DONE);
+    }
+  return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLIGTLSessionManagerNode::ProcCurrentPositionTransform(vtkMRMLLinearTransformNode * node)
+{
+  if (!node)
+    {
+    return 0;
+    }
+
+  /// Set current position
+  return 1;
+}
+
+

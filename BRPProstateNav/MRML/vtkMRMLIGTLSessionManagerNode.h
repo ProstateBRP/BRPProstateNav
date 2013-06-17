@@ -17,9 +17,14 @@
 #include "vtkSlicerBRPProstateNavModuleMRMLExport.h"
 
 class vtkMatrix4x4;
+class vtkMRMLLinearTransformNode;
+
 class vtkIGTLToMRMLString;
 class vtkIGTLToMRMLStatus;
 class vtkMRMLIGTLConnectorNode;
+class vtkMRMLIGTLStatusNode;
+class vtkMRMLAnnotationTextNode;
+
 
 /// \brief MRML node to manage OpenIGTLink 
 ///
@@ -112,15 +117,17 @@ public:
     COMSTATE_TARGETING_MOVE_SENT,
     COMSTATE_TARGETING_MOVE_ACK,
     COMSTATE_TARGETING_MOVE_DONE, // SUCCESS
-    COMSTATE_MANUAL_MOVE_SENT,
-    COMSTATE_MANUAL_MOVE_ACK,
-    COMSTATE_MANUAL_MOVE_DONE, // SUCCESS
+    COMSTATE_MANUAL_CMD_SENT,
+    COMSTATE_MANUAL_CMD_ACK,
+    COMSTATE_MANUAL_CMD_DONE, // SUCCESS
+
+    // TODO: following should not be used by CommunicationStatus?
     COMSTATE_STOP_CMD_SENT,
-    COMSTATE_STOP_CMD_ACK,
+    COMSTATE_STOP_CMD_DONE,
     COMSTATE_EMERGENCY_CMD_SENT,
-    COMSTATE_EMERGENCY_CMD_ACK,
+    COMSTATE_EMERGENCY_CMD_DONE,
     COMSTATE_GET_STATUS_SENT,
-    COMSTATE_GET_STATUS_ACK,
+    COMSTATE_GET_CURRENT_POSITION_SENT,
   };
 
   inline int GetComStatus() { return this->CommunicationStatus; };
@@ -161,6 +168,21 @@ protected:
   /// Return non-zero value if it is connected, otherwise return 0.
   int IsConnected();
 
+  int SetCommunicationStatus(int newState);
+
+  /// Incoming message handler
+  int ProcAckknowledgeString(vtkMRMLAnnotationTextNode * node);
+  int ProcStartUpStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcCalibrationStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcTargetingStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcTargetStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcMovingStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcManualStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcErrorStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcCommandStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcCurrentPositionTransform(vtkMRMLLinearTransformNode * node);
+
+
   //----------------------------------------------------------------
   // Reference role strings
   //----------------------------------------------------------------
@@ -183,6 +205,10 @@ protected:
   vtkGetStringMacro(MessageNodeReferenceMRMLAttributeName);
 
 private:
+
+  // TODO: We could use reference mechanism to keep the node IDs
+  // for incoming and outgoing data.
+
   // OpenIGTLink connector Node
   char* ConnectorNodeIDInternal;
   vtkSetStringMacro(ConnectorNodeIDInternal);
@@ -206,10 +232,6 @@ private:
   vtkSetStringMacro(InAckknowledgeStringNodeIDInternal);
   vtkGetStringMacro(InAckknowledgeStringNodeIDInternal);
 
-  char* InCommandStringNodeIDInternal;
-  vtkSetStringMacro(InCommandStringNodeIDInternal);
-  vtkGetStringMacro(InCommandStringNodeIDInternal);
-
   char* InStartUpStatusNodeIDInternal;
   vtkSetStringMacro(InStartUpStatusNodeIDInternal);
   vtkGetStringMacro(InStartUpStatusNodeIDInternal);
@@ -222,6 +244,10 @@ private:
   vtkSetStringMacro(InTargetingStatusNodeIDInternal);
   vtkGetStringMacro(InTargetingStatusNodeIDInternal);
   
+  char* InTargetStatusNodeIDInternal;
+  vtkSetStringMacro(InTargetStatusNodeIDInternal);
+  vtkGetStringMacro(InTargetStatusNodeIDInternal);
+  
   char* InMovingStatusNodeIDInternal;
   vtkSetStringMacro(InMovingStatusNodeIDInternal);
   vtkGetStringMacro(InMovingStatusNodeIDInternal);
@@ -233,10 +259,16 @@ private:
   char* InErrorStatusNodeIDInternal;
   vtkSetStringMacro(InErrorStatusNodeIDInternal);
   vtkGetStringMacro(InErrorStatusNodeIDInternal);
+  
+  char* InCommandStatusNodeIDInternal;
+  vtkSetStringMacro(InCommandStatusNodeIDInternal);
+  vtkGetStringMacro(InCommandStatusNodeIDInternal);
 
   char* InCurrentPositionTransformNodeIDInternal;
   vtkSetStringMacro(InCurrentPositionTransformNodeIDInternal);
   vtkGetStringMacro(InCurrentPositionTransformNodeIDInternal);
+
+
 
   vtkIGTLToMRMLString * StringMessageConverter;
   vtkIGTLToMRMLStatus * StatusMessageConverter;
