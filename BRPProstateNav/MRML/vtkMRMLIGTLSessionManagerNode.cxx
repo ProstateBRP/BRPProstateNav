@@ -53,6 +53,19 @@ vtkMRMLIGTLSessionManagerNode::vtkMRMLIGTLSessionManagerNode()
   this->StringMessageConverter = NULL;
   this->StatusMessageConverter = NULL;
 
+  this->OutCommandNodeIDInternal                 = NULL;
+  this->OutCalibrationTransformNodeIDInternal    = NULL;
+  this->OutTargetTransformQueryNodeIDInternal    = NULL;
+  this->InAckknowledgeStringNodeIDInternal       = NULL;
+  this->InStartUpStatusNodeIDInternal            = NULL;
+  this->InCalibrationStatusNodeIDInternal        = NULL;
+  this->InTargetingStatusNodeIDInternal          = NULL;
+  this->InTargetStatusNodeIDInternal             = NULL;
+  this->InMovingStatusNodeIDInternal             = NULL;
+  this->InManualStatusNodeIDInternal             = NULL;
+  this->InErrorStatusNodeIDInternal              = NULL;
+  this->InCommandStatusNodeIDInternal            = NULL;
+  this->InCurrentPositionTransformNodeIDInternal = NULL;
 
   this->CommunicationStatus = 0;
 }
@@ -234,58 +247,73 @@ void vtkMRMLIGTLSessionManagerNode::ProcessMRMLEvents ( vtkObject *caller,
   //  }
   
   vtkMRMLNode * node = vtkMRMLNode::SafeDownCast(caller);
-  if (strcmp(node->GetID(), this->GetConnectorNodeIDInternal()) == 0)
+  if (!node)
+    {
+    return;
+    }
+
+  if (this->GetConnectorNodeIDInternal() && strcmp(node->GetID(), this->GetConnectorNodeIDInternal()) == 0)
     {
     return;
     }
 
   // Process incoming data
-  if (strcmp(node->GetID(), this->GetInAckknowledgeStringNodeIDInternal()) == 0)
+  if (this->GetInAckknowledgeStringNodeIDInternal() &&
+      strcmp(node->GetID(), this->GetInAckknowledgeStringNodeIDInternal()) == 0)
     {
     vtkMRMLAnnotationTextNode * tnode = vtkMRMLAnnotationTextNode::SafeDownCast(node);
     this->ProcAckknowledgeString(tnode);
     }
-  else if (strcmp(node->GetID(), this->GetInStartUpStatusNodeIDInternal()) == 0)
+  else if (this->GetInStartUpStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInStartUpStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcStartUpStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInCalibrationStatusNodeIDInternal()) == 0)
+  else if (this->GetInCalibrationStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInCalibrationStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcCalibrationStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInTargetingStatusNodeIDInternal()) == 0)
+  else if (this->GetInTargetingStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInTargetingStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcTargetingStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInTargetStatusNodeIDInternal()) == 0)
+  else if (this->GetInTargetStatusNodeIDInternal() && 
+           strcmp(node->GetID(), this->GetInTargetStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcTargetStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInMovingStatusNodeIDInternal()) == 0)
+  else if (this->GetInMovingStatusNodeIDInternal() && 
+           strcmp(node->GetID(), this->GetInMovingStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcMovingStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInManualStatusNodeIDInternal()) == 0)
+  else if (this->GetInManualStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInManualStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcMovingStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInErrorStatusNodeIDInternal()) == 0)
+  else if (this->GetInErrorStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInErrorStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcErrorStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInCommandStatusNodeIDInternal()) == 0)
+  else if (this->GetInCommandStatusNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInCommandStatusNodeIDInternal()) == 0)
     {
     vtkMRMLIGTLStatusNode * snode = vtkMRMLIGTLStatusNode::SafeDownCast(node);
     this->ProcCommandStatus(snode);
     }
-  else if (strcmp(node->GetID(), this->GetInCurrentPositionTransformNodeIDInternal()) == 0)
+  else if (this->GetInCurrentPositionTransformNodeIDInternal() &&
+           strcmp(node->GetID(), this->GetInCurrentPositionTransformNodeIDInternal()) == 0)
     {
     vtkMRMLLinearTransformNode * tnode = vtkMRMLLinearTransformNode::SafeDownCast(node);
     this->ProcCurrentPositionTransform(tnode);
