@@ -132,6 +132,8 @@ public:
 
   inline int GetComStatus() { return this->CommunicationStatus; };
 
+  virtual int SendCommandWithQueryID(const char* command);
+
   virtual int SendStartUpCommand();
   virtual int SendPlanningCommand();
   virtual int SendCalibrationCommand();
@@ -171,17 +173,9 @@ protected:
   int SetCommunicationStatus(int newState);
 
   /// Incoming message handler
-  int ProcAckknowledgeString(vtkMRMLAnnotationTextNode * node);
-  int ProcStartUpStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcCalibrationStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcTargetingStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcTargetStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcMovingStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcManualStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcErrorStatus(vtkMRMLIGTLStatusNode * node);
-  int ProcCommandStatus(vtkMRMLIGTLStatusNode * node);
+  int ProcAcknowledgeString(vtkMRMLAnnotationTextNode * node);
+  int ProcStatus(vtkMRMLIGTLStatusNode * node);
   int ProcCurrentPositionTransform(vtkMRMLLinearTransformNode * node);
-
 
   //----------------------------------------------------------------
   // Reference role strings
@@ -215,23 +209,8 @@ private:
   vtkGetStringMacro(ConnectorNodeIDInternal);
 
   // Outgoing message nodes
-  char* OutCommandNodeIDInternal;
-  vtkSetStringMacro(OutCommandNodeIDInternal);
-  vtkGetStringMacro(OutCommandNodeIDInternal);
-
-  char* OutCalibrationTransformNodeIDInternal;
-  vtkSetStringMacro(OutCalibrationTransformNodeIDInternal);
-  vtkGetStringMacro(OutCalibrationTransformNodeIDInternal);
-
-  char* OutTargetTransformQueryNodeIDInternal;
-  vtkSetStringMacro(OutTargetTransformQueryNodeIDInternal);
-  vtkGetStringMacro(OutTargetTransformQueryNodeIDInternal);
 
   // Incoming message nodes
-  char* InAckknowledgeStringNodeIDInternal;
-  vtkSetStringMacro(InAckknowledgeStringNodeIDInternal);
-  vtkGetStringMacro(InAckknowledgeStringNodeIDInternal);
-
   char* InStartUpStatusNodeIDInternal;
   vtkSetStringMacro(InStartUpStatusNodeIDInternal);
   vtkGetStringMacro(InStartUpStatusNodeIDInternal);
@@ -259,21 +238,26 @@ private:
   char* InErrorStatusNodeIDInternal;
   vtkSetStringMacro(InErrorStatusNodeIDInternal);
   vtkGetStringMacro(InErrorStatusNodeIDInternal);
-  
-  char* InCommandStatusNodeIDInternal;
-  vtkSetStringMacro(InCommandStatusNodeIDInternal);
-  vtkGetStringMacro(InCommandStatusNodeIDInternal);
 
+  char* InEmergencyStatusNodeIDInternal;
+  vtkSetStringMacro(InEmergencyStatusNodeIDInternal);
+  vtkGetStringMacro(InEmergencyStatusNodeIDInternal);
+  
   char* InCurrentPositionTransformNodeIDInternal;
   vtkSetStringMacro(InCurrentPositionTransformNodeIDInternal);
   vtkGetStringMacro(InCurrentPositionTransformNodeIDInternal);
 
-
+  char* InActualTargetTransformNodeIDInternal;
+  vtkSetStringMacro(InActualTargetTransformNodeIDInternal);
+  vtkGetStringMacro(InActualTargetTransformNodeIDInternal);
 
   vtkIGTLToMRMLString * StringMessageConverter;
   vtkIGTLToMRMLStatus * StatusMessageConverter;
 
   int CommunicationStatus; // COMSTATE_*
+
+  int QueryCounter; // Used to generate a unique query ID.
+
   
 };
 

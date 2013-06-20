@@ -34,13 +34,19 @@ Currently, you can push a command message from the Python Interactor. After open
     >>> sm = vtkMRMLIGTLSessionManagerNode()
     >>> scene.AddNode(sm)
     >>> sm.SetAndObserveConnectorNodeID(cnode.GetID())
-    >>> snode = scene.GetNodeByID('vtkMRMLAnnotationTextNode1')
 
-If you wat to send 'Test' command, call the following line:
-
-    >>> snode.SetTextLabel('Test')
-
-
+To send workphase commands, the following functions can be used:
+- virtual int SendStartUpCommand();
+- virtual int SendPlanningCommand();
+- virtual int SendCalibrationCommand();
+- virtual int SendCalibrationTransform(vtkMatrix4x4* transform);
+- virtual int SendTargetingCommand();
+- virtual int SendTargetingTarget(double r, double a, double s);
+- virtual int SendTargetingMove();
+- virtual int SendManualCommand();
+- virtual int SendStopCommand();
+- virtual int SendEmergencyCommand();
+- virtual int SendGetStatusCommand();
 
 ### Plans
 
